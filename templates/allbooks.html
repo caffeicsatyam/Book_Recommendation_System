@@ -184,6 +184,14 @@
     <p class="page-subtitle">Complete Collection</p>
   </div>
 
+  <!-- Book Search Form -->
+  <div class="container" style="margin-bottom: 30px;">
+    <form method="POST" action="{{ url_for('search') }}" class="d-flex gap-2" style="max-width: 500px;">
+      <input type="text" name="search_query" class="form-control" placeholder="Search for a book..." required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(226,176,74,0.3); color: white;">
+      <button type="submit" class="btn" style="background: rgba(226,176,74,0.9); color: #000; font-weight: 600; padding: 8px 24px;">Search</button>
+    </form>
+  </div>
+
   <!-- BOOK GRID -->
   <div class="container">
     <div class="row g-4">

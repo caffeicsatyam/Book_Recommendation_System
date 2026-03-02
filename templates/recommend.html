@@ -86,6 +86,7 @@
       max-width: 600px;
       margin: 0 auto 80px;
       text-align: center;
+      position: relative;
     }
 
     .form-control {
@@ -101,6 +102,38 @@
       border-color: var(--accent-neon);
       box-shadow: none;
       color: white;
+    }
+
+    .suggestions-container {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 600px;
+      background: rgba(10, 10, 10, 0.98);
+      border: 2px solid rgba(0, 245, 255, 0.5);
+      border-top: none;
+      display: none;
+      padding: 8px 0;
+      z-index: 10000;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .suggestion-item {
+      padding: 12px 15px;
+      color: #ccc;
+      cursor: pointer;
+      transition: 0.2s;
+      border-left: 4px solid transparent;
+      font-size: 0.95rem;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(0, 245, 255, 0.15);
+      color: var(--accent-neon);
+      border-left-color: var(--accent-neon);
+      padding-left: 18px;
     }
 
     .btn-recommend {
@@ -188,33 +221,63 @@
     <h1 class="page-title">Recommendation</h1>
     <p class="subtitle">Essential Reading for the Modern Mind</p>
 
-    <div class="search-container">
-        <form action="/recommend_books" method="post">
-          <input name="user_input" type="text" class="form-control" placeholder="Enter a book title..." required>
-          <button type="submit" class="btn btn-recommend">Discover</button>
-        </form>
-    </div>
-
-    <div class="row">
-    {% if data %}
-        {% for i in data %}
-            <div class="col-md-3" style="margin-top: 50px">
-                <div class="card">
-                    <div class="card-body">
-                        <img class="card-img-top" src="{{i[2]}}">
-                        <p>{{i[0]}}</p>
-                        <h4 class="text-white">{{i[1]}}</h4>
-                    </div>
-                </div>
+    <!-- Top 50 Books Section -->
+    {% if top_books_name %}
+    <div style="margin-bottom: 80px;">
+      <h2 style="font-family: 'Syncopate', sans-serif; font-size: 2rem; margin-bottom: 40px; color: var(--accent-gold); letter-spacing: 2px;">TOP 50 BOOKS</h2>
+      <div class="row">
+        {% for i in range(top_books_name|length) %}
+          <div class="col-md-3" style="margin-bottom: 40px;">
+            <div class="book-card">
+              <div class="book-image">
+                <img src="{{ top_books_image[i] }}" alt="{{ top_books_name[i] }}">
+              </div>
+              <div class="book-title">{{ top_books_name[i] }}</div>
+              <div class="book-author">{{ top_books_author[i] }}</div>
+              <small style="color: #999; display: block; margin-top: 8px;">
+                <i class="bi bi-star-fill" style="color: var(--accent-gold);"></i> {{ "%.2f"|format(top_books_rating[i]) }} | {{ top_books_votes[i] }} ratings
+              </small>
             </div>
+          </div>
         {% endfor %}
-
-    {% elif error %}
-        <div class="col-12">
-            <h4 class="text-center" style="color: white; margin-top: 50px;">{{ error }}</h4>
-        </div>
+      </div>
+    </div>
     {% endif %}
-</div>
+
+    <!-- Search & Recommendations Section -->
+    <div style="margin-top: 100px; padding-top: 60px; border-top: 1px solid rgba(255,255,255,0.05);">
+      <h2 style="font-family: 'Syncopate', sans-serif; font-size: 2rem; margin-bottom: 10px; color: var(--accent-gold); letter-spacing: 2px;">SEARCH BOOKS</h2>
+      <p class="subtitle">Find similar books or search by title</p>
+
+      <div class="search-container">
+          <form id="recommendForm" method="POST" action="{{ url_for('recommend_books') }}">
+            <input id="userInput" name="user_input" type="text" class="form-control" placeholder="Enter a book title to find similar books..." required autocomplete="off">
+            <div class="suggestions-container" id="suggestionsContainer"></div>
+            <button type="submit" class="btn btn-recommend">Discover</button>
+          </form>
+      </div>
+
+      <div class="row">
+      {% if data %}
+          {% for i in data %}
+              <div class="col-md-3" style="margin-top: 50px">
+                  <div class="book-card">
+                      <div class="book-image">
+                          <img src="{{i[2]}}" alt="{{i[0]}}">
+                      </div>
+                      <div class="book-title">{{i[0]}}</div>
+                      <div class="book-author">{{i[1]}}</div>
+                  </div>
+              </div>
+          {% endfor %}
+
+      {% elif error %}
+          <div class="col-12">
+              <h4 class="text-center" style="color: white; margin-top: 50px;">{{ error }}</h4>
+          </div>
+      {% endif %}
+      </div>
+    </div>
 
 
   </div>
@@ -222,6 +285,112 @@
   <footer>
     <p>© 2026 SATYAM DESIGN STUDIO. ALL RIGHTS RESERVED.</p>
   </footer>
+
+  <script>
+    const userInput = document.getElementById('userInput');
+    const suggestionsContainer = document.getElementById('suggestionsContainer');
+    let currentIndex = -1;
+    let suggestions = [];
+
+    userInput.addEventListener('input', async function() {
+      const text = this.value.trim();
+      
+      if (text.length < 1) {
+        suggestionsContainer.style.display = 'none';
+        suggestions = [];
+        currentIndex = -1;
+        return;
+      }
+
+      try {
+        const response = await fetch('/predict_word', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'text=' + encodeURIComponent(text)
+        });
+
+        const data = await response.json();
+        const nextWord = data.next_word;
+
+        if (nextWord) {
+          suggestions = [
+            text + ' ' + nextWord,
+            text.charAt(0).toUpperCase() + text.slice(1),
+            text
+          ].filter(s => s.toLowerCase() !== text.toLowerCase());
+
+          displaySuggestions(suggestions);
+        } else {
+          suggestionsContainer.style.display = 'none';
+        }
+      } catch (error) {
+        console.log('Prediction error:', error);
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+
+    function displaySuggestions(items) {
+      suggestionsContainer.innerHTML = '';
+      items.slice(0, 3).forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.textContent = item;
+        div.onclick = () => {
+          userInput.value = item;
+          suggestionsContainer.style.display = 'none';
+          suggestions = [];
+          currentIndex = -1;
+        };
+        suggestionsContainer.appendChild(div);
+      });
+      suggestionsContainer.style.display = 'block';
+      currentIndex = -1;
+    }
+
+    // Keyboard navigation
+    userInput.addEventListener('keydown', function(e) {
+      const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        currentIndex = (currentIndex + 1) % items.length;
+        updateSelection(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        currentIndex = (currentIndex - 1 + items.length) % items.length;
+        updateSelection(items);
+      } else if (e.key === 'Enter' && currentIndex >= 0) {
+        e.preventDefault();
+        userInput.value = suggestions[currentIndex];
+        suggestionsContainer.style.display = 'none';
+        suggestions = [];
+        currentIndex = -1;
+      } else if (e.key === 'Escape') {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+
+    function updateSelection(items) {
+      items.forEach((item, index) => {
+        if (index === currentIndex) {
+          item.style.background = 'rgba(0, 245, 255, 0.2)';
+          item.style.color = 'var(--accent-neon)';
+        } else {
+          item.style.background = 'transparent';
+          item.style.color = '#999';
+        }
+      });
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+      if (e.target !== userInput) {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+  </script>
 
 </body>
 </html>

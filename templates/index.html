@@ -214,6 +214,14 @@
     <h1 class="page-title">TOP 50</h1>
     <p class="subtitle">Essential Reading for the Modern Mind</p>
 
+    <!-- Book Search Form -->
+    <div style="margin-bottom: 40px;">
+      <form method="POST" action="{{ url_for('search') }}" class="d-flex gap-2" style="max-width: 500px;">
+        <input type="text" name="search_query" class="form-control" placeholder="Search for a book..." required style="background: rgba(255,255,255,0.08); border: 1px solid rgba(226,176,74,0.3); color: white;">
+        <button type="submit" class="btn" style="background: rgba(226,176,74,0.9); color: #000; font-weight: 600; padding: 8px 24px;">Search</button>
+      </form>
+    </div>
+
     <div class="row g-4">
       {% for i in range(book_name|length) %}
         <div class="col-xl-3 col-lg-4 col-md-6">
