@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify
 import pickle
 import pandas as pd
@@ -13,19 +14,21 @@ app = Flask(__name__)
 # LOAD MODELS & DATA
 # =========================
 
-books = pickle.load(open('model/df.pkl', 'rb'))
-df = books  # same dataset
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-popular_df = pickle.load(open('model/popular_df.pkl', 'rb'))
-pt = pickle.load(open('model/pt.pkl', 'rb'))
-similarity_score = pickle.load(open('model/similarity_score.pkl', 'rb'))
+def load_model(path):
+    return pickle.load(open(os.path.join(BASE_DIR, path), "rb"))
 
-next_word = pickle.load(open('model/next_word.pkl', 'rb'))
-tokenizer_next = pickle.load(open('model/tokenizer.pkl', 'rb'))
+books = load_model("model/df.pkl")
+popular_df = load_model("model/popular_df.pkl")
+pt = load_model("model/pt.pkl")
+similarity_score = load_model("model/similarity_score.pkl")
 
-# Load pre-trained search model
-vectorizer = pickle.load(open('model/vectorizer.pkl', 'rb'))
-tfidf_matrix = pickle.load(open('model/tfidf_matrix.pkl', 'rb'))
+next_word = load_model("model/next_word.pkl")
+tokenizer_next = load_model("model/tokenizer.pkl")
+
+vectorizer = load_model("model/vectorizer.pkl")
+tfidf_matrix = load_model("model/tfidf_matrix.pkl")
 
 # FAST lookup table
 book_lookup = books.drop_duplicates('Book-Title').set_index('Book-Title')
