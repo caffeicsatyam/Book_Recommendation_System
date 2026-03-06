@@ -19,10 +19,14 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def load_model(path):
     return pickle.load(open(os.path.join(BASE_DIR, path), "rb"))
 
-books = load_model("model/df.pkl")
-popular_df = load_model("model/popular_df.pkl")
-pt = load_model("model/pt.pkl")
-similarity_score = load_model("model/similarity_score.pkl")
+try:
+    books = load_model("model/df.pkl")
+    popular_df = load_model("model/popular_df.pkl")
+    pt = load_model("model/pt.pkl")
+    similarity_score = load_model("model/similarity_score.pkl")
+except FileNotFoundError as e:
+    print(f"Error: Required model file not found: {e}")
+    exit(1)
 
 next_word = load_model("model/next_word.pkl")
 tokenizer_next = load_model("model/tokenizer.pkl")
@@ -56,7 +60,7 @@ def book_search(text, top_n=10):
     similarity = cosine_similarity(query_vec, tfidf_matrix).flatten()
     top_indices = similarity.argsort()[-20:][::-1]
 
-    titles = df.iloc[top_indices]["Book-Title"]
+    titles = books.iloc[top_indices]["Book-Title"]
 
     # remove duplicate editions
     cleaned = []
@@ -224,4 +228,5 @@ def all_books():
 # =========================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=5000)
