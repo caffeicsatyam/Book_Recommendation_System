@@ -204,7 +204,7 @@ jupyter notebook book_recommendation_System.ipynb
 
 **Issue**: Models not found error
 - **Solution**: Ensure the `model/` directory exists and contains all `.pkl` files
-
+pip install --only-binary :all: scipy
 **Issue**: ModuleNotFoundError
 - **Solution**: Verify all packages are installed: `pip install -r requirements.txt`
 
