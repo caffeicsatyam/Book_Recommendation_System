@@ -129,9 +129,10 @@ def search():
         user_input = user_input.strip()
         
         # 1. Try Similarity Recommendation first
-        match, score, _ = process.extractOne(user_input, pt.index, score_cutoff=70)
+        result = process.extractOne(user_input, pt.index, score_cutoff=70)
         
-        if match:
+        if result:
+            match, score, _ = result
             book_index = np.where(pt.index == match)[0][0]
             distances = similarity_score[book_index]
             similar_items = sorted(enumerate(distances), key=lambda x: x[1], reverse=True)[1:12]
