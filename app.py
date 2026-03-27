@@ -24,15 +24,11 @@ try:
     popular_df = load_model("model/popular_df.pkl")
     pt = load_model("model/pt.pkl")
     similarity_score = load_model("model/similarity_score.pkl")
+    vectorizer = load_model("model/vectorizer.pkl")
+    tfidf_matrix = load_model("model/tfidf_matrix.pkl")
 except FileNotFoundError as e:
     print(f"Error: Required model file not found: {e}")
     exit(1)
-
-next_word = load_model("model/next_word.pkl")
-tokenizer_next = load_model("model/tokenizer.pkl")
-
-vectorizer = load_model("model/vectorizer.pkl")
-tfidf_matrix = load_model("model/tfidf_matrix.pkl")
 
 # FAST lookup table
 book_lookup = books.drop_duplicates('Book-Title').set_index('Book-Title')
@@ -41,19 +37,13 @@ book_lookup = books.drop_duplicates('Book-Title').set_index('Book-Title')
 # HELPER FUNCTIONS
 # =========================
 
-def next_word_predictor(text):
-    try:
-        token_list = tokenizer_next.texts_to_sequences([text])[0]
-        token_list = pad_sequences([token_list], maxlen=27, padding='pre')
-        predicted = next_word.predict(token_list, verbose=0)
-        predicted_index = np.argmax(predicted)
-
-        for word, index in tokenizer_next.word_index.items():
-            if index == predicted_index:
-                return word
-        return ""
-    except:
-        return ""
+def get_book_suggestions(query, top_n=5):
+    if not query:
+        return []
+    
+    # Filter books containing query (case-insensitive)
+    suggestions = books[books['Book-Title'].str.lower().str.contains(query.lower(), na=False)]['Book-Title'].unique()
+    return suggestions[:top_n].tolist()
 
 def book_search(text, top_n=10):
     query_vec = vectorizer.transform([text])
@@ -107,76 +97,80 @@ def recommend_ui():
     )
 
 # =========================
-# AUTOCOMPLETE NEXT WORD
+# AUTOCOMPLETE / SUGGESTIONS
 # =========================
+
+@app.route('/suggest_titles', methods=['POST'])
+def suggest_titles():
+    user_input = request.form.get('query', '').strip()
+    suggestions = get_book_suggestions(user_input)
+    return jsonify({'suggestions': suggestions})
 
 @app.route('/predict_word', methods=['POST'])
 def predict_word():
+    # Legacy endpoint retained for existing JS
     user_input = request.form.get('text', '').strip()
-    predicted = next_word_predictor(user_input)
-    return jsonify({'next_word': predicted})
+    suggestions = get_book_suggestions(user_input)
+    predicted = suggestions[0] if suggestions else ""
+    return jsonify({'next_word': predicted, 'suggestions': suggestions})
 
 # =========================
-# RECOMMEND SIMILAR BOOKS
-# =========================
-
-@app.route('/recommend_books', methods=['POST'])
-def recommend_books():
-    user_input = request.form.get('user_input').strip()
-
-    match, score, _ = process.extractOne(
-        user_input,
-        pt.index,
-        score_cutoff=60
-    )
-
-    if match is None:
-        return render_template('recommend.html', error="Book not found.")
-
-    book_index = np.where(pt.index == match)[0][0]
-    distances = similarity_score[book_index]
-
-    similar_items = sorted(
-        enumerate(distances),
-        key=lambda x: x[1],
-        reverse=True
-    )[1:6]
-
-    data = []
-
-    for i in similar_items:
-        title = pt.index[i[0]]
-        if title in book_lookup.index:
-            row = book_lookup.loc[title]
-            data.append([title, row['Book-Author'], row['Image-URL-M']])
-
-    return render_template('recommend.html', data=data)
-
-# =========================
-# SEARCH ROUTES
+# SEARCH & RECOMMENDATION LOGIC
 # =========================
 
 @app.route('/search', methods=['GET', 'POST'])
+@app.route('/recommend_books', methods=['POST'])
 def search():
     if request.method == 'POST':
-        search_text = request.form.get('search_query', '').strip()
+        user_input = request.form.get('search_query') or request.form.get('user_input')
+        if not user_input:
+            return render_template('recommend.html', error="Please enter a book title.")
+        
+        user_input = user_input.strip()
+        
+        # 1. Try Similarity Recommendation first
+        match, score, _ = process.extractOne(user_input, pt.index, score_cutoff=70)
+        
+        if match:
+            book_index = np.where(pt.index == match)[0][0]
+            distances = similarity_score[book_index]
+            similar_items = sorted(enumerate(distances), key=lambda x: x[1], reverse=True)[1:12]
+            
+            data = []
+            # Include the matched book itself
+            if match in book_lookup.index:
+                row = book_lookup.loc[match]
+                if isinstance(row, pd.DataFrame): row = row.iloc[0]
+                data.append([match, row['Book-Author'], row['Image-URL-M'], "MATCHED"])
 
-        if not search_text:
-            return render_template('recommend.html', error="Please enter a search query.")
+            for i in similar_items:
+                title = pt.index[i[0]]
+                if title in book_lookup.index:
+                    row = book_lookup.loc[title]
+                    if isinstance(row, pd.DataFrame): row = row.iloc[0]
+                    # Avoid duplicated title in result
+                    if title != match:
+                        data.append([title, row['Book-Author'], row['Image-URL-M'], "RECOMMENDED"])
+            
+            return render_template('recommend.html', data=data, query=user_input)
 
+        # 2. Fallback to TF-IDF Search
         try:
-            titles = book_search(search_text)
-
+            titles = book_search(user_input)
             results = []
             for title in titles:
                 if title in book_lookup.index:
                     row = book_lookup.loc[title]
-                    results.append([title, row['Book-Author'], row['Image-URL-M']])
+                    if isinstance(row, pd.DataFrame): row = row.iloc[0]
+                    results.append([title, row['Book-Author'], row['Image-URL-M'], "SEARCH RESULTS"])
 
-            return render_template('recommend.html', data=results)
+            if not results:
+                return render_template('recommend.html', error=f"No books found for '{user_input}'.", query=user_input)
+
+            return render_template('recommend.html', data=results, query=user_input)
 
         except Exception as e:
-            return render_template('recommend.html', error=str(e))
+            return render_template('recommend.html', error=str(e), query=user_input)
 
     return render_template('recommend.html')
 
@@ -184,12 +178,6 @@ def search():
 def similar(book):
     titles = book_search(book)
     return jsonify(titles)
-
-
-
-
-
-
 
 # =========================
 # BOOK LIBRARY (PAGINATION)
@@ -230,4 +218,5 @@ def all_books():
 if __name__ == "__main__":
     from waitress import serve
     port = int(os.environ.get("PORT", 5000))
+    print(f"Server started on port {port}")
     serve(app, host='0.0.0.0', port=port)
