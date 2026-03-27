@@ -1,5 +1,12 @@
 # 📚 Book Recommendation System
 
+<div align="center">
+  <img src="static/image.png" width="800" alt="Book Bay Banner">
+  <br>
+  <h3>Discover your next favorite book with AI-powered wisdom</h3>
+</div>
+
+
 A machine learning-powered Flask web application that provides intelligent book recommendations based on user preferences and collaborative filtering algorithms.
 
 ## 🌟 Features
