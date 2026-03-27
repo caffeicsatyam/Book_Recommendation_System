@@ -1,15 +1,27 @@
-# 📚 Book Recommendation System
+<h1 align="center">BOOK BAY</h1>
 
 <div align="center">
-  <img src="static/image.png" width="800" alt="Book Bay Banner">
+  <a href="http://3.109.183.168/">
+    <img src="static/image.png" width="800" alt="Book Bay Banner">
+  </a>
   <br>
   <h3>Discover your next favorite book with AI-powered wisdom</h3>
+  <a href="http://3.109.183.168/"><strong>🌐 Visit Live Site</strong></a>
+  <br><br>
+  
+  ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+  ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
+  ![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white)
+  ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+  ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
+  ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 </div>
 
+---
 
 A machine learning-powered Flask web application that provides intelligent book recommendations based on user preferences and collaborative filtering algorithms.
 
-## 🌟 Features
+## Features
 
 - **Smart Book Recommendations**: Get personalized book recommendations using collaborative filtering and content-based filtering
 - **Book Search**: Search for books using fuzzy matching and TF-IDF vectorization
@@ -18,7 +30,7 @@ A machine learning-powered Flask web application that provides intelligent book 
 - **Book Library**: Browse the entire book collection with pagination
 - **Responsive UI**: Clean, user-friendly interface built with HTML/CSS
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Backend**: Flask 3.1.3
 - **Machine Learning**: TensorFlow/Keras, Scikit-learn, Pandas, NumPy
@@ -33,7 +45,7 @@ A machine learning-powered Flask web application that provides intelligent book 
 - pip (Python package manager)
 - Virtual environment (recommended)
 
-## 🚀 Installation
+## 💻 Installation
 
 ### 1. Clone or navigate to the project directory
 ```bash
@@ -65,7 +77,7 @@ source venv310/bin/activate
 pip install -r requirements.txt
 ```
 
-## 📌 Project Structure
+## Project Structure
 
 ```
 Book_Recommendation_System/
@@ -101,7 +113,7 @@ Book_Recommendation_System/
 └── venv310/                        # Virtual environment (auto-generated)
 ```
 
-## 🎯 Usage
+## 📖 Usage
 
 ### Running the Application
 
@@ -140,7 +152,7 @@ http://localhost:5000
 | `/similar/<book>` | GET | Get similar books (JSON) |
 | `/Book_Library` | GET | Browse entire book collection with pagination |
 
-## 🤖 How It Works
+## How It Works
 
 ### Book Recommendations
 The system uses two main approaches:
@@ -156,7 +168,7 @@ Uses a pre-trained LSTM neural network to predict the next word as users type, e
 - Uses TF-IDF vectorization combined with cosine similarity for finding similar books
 - Automatically removes duplicate book editions from results
 
-## 📊 Key Features in Detail
+## Key Features in Detail
 
 ### Popular Books
 Displays the most popular and highest-rated books from the dataset to help users discover trending books.
@@ -176,7 +188,7 @@ Displays the most popular and highest-rated books from the dataset to help users
 - Pagination support (24 books per page)
 - Displays book title, author, cover image, and publisher
 
-## 🔧 Dependencies
+## Dependencies
 
 Key dependencies:
 - Flask - Web framework
@@ -189,7 +201,7 @@ Key dependencies:
 
 See `requirements.txt` for the complete list.
 
-## 📝 Model Training
+## Model Training
 
 The pre-trained models were generated using Jupyter notebooks:
 - `book_recommendation_System.ipynb` - Main model development
@@ -197,17 +209,17 @@ The pre-trained models were generated using Jupyter notebooks:
 
 To retrain or modify models, open these notebooks with Jupyter:
 ```bash
-jupyter notebook book_recommendation_System.ipynb
+jupyter notebook BOOK-BAY.ipynb
 ```
 
-## 📈 Performance Optimization
+## Performance Optimization
 
 - **Fast Lookup Table**: Uses indexed dataset for O(1) book lookups
 - **Pre-computed Similarity**: Similarity scores are pre-computed and cached
 - **Pagination**: Implements pagination for the book library to handle large datasets
 - **Duplicate Removal**: Smart deduplication of book editions in search results
 
-## 🐛 Troubleshooting
+## 🛠️ Troubleshooting
 
 **Issue**: Models not found error
 - **Solution**: Ensure the `model/` directory exists and contains all `.pkl` files
@@ -237,4 +249,4 @@ For questions or suggestions, please open an issue in the project repository.
 ---
 
 **Last Updated**: March 2026  
-**Version**: 1.0.0
+**Version**: 1.1.0
